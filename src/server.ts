@@ -3,7 +3,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 
-const app = express();
+const app = express();  
 app.use(cors());
 
 interface Device {
@@ -50,9 +50,26 @@ const devices: Device[] = [
 ];
 
 app.get("/seenDevices", (req: Request, res: Response) => {
-  const seenDevices = devices.filter(device => device.status === "Seen");
+  const seenDevices = devices.filter((device) => device.status === "Seen");
 
   res.json(seenDevices);
+});
+
+interface StatusCount {
+  [key: string]: number;
+}
+
+app.get("/devicesStatus", (req: Request, res: Response) => {
+  const statusCounts: Record<string, number> = devices.reduce<StatusCount>(
+    (acc: StatusCount, item) => {
+      const status = item.status.toLowerCase();
+      acc[status] = (acc[status] || 0) + 1; // Increment the count for the current status
+      return acc;
+    },
+    { total: devices.length } // Add the total to the beginning.
+  );
+
+  res.json(statusCounts);
 });
 
 app.get("/devices", (req: Request, res: Response) => {
