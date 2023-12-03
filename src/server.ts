@@ -2,9 +2,31 @@
 
 import express, { Request, Response } from "express";
 import cors from "cors";
+import swaggerUi from 'swagger-ui-express';
+import swaggerJSDoc from 'swagger-jsdoc';
+
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'GPS Devices Management API',
+    version: '1.0.0',
+    description: 'API for managing gps devices',
+  },
+
+};
+
+const options = {
+  swaggerDefinition,
+  // Paths to files containing OpenAPI definitions
+  apis: ['./src/server.ts'],
+};
+
+const swaggerSpec = swaggerJSDoc(options);
+
 
 const app = express();  
 app.use(cors());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 interface Device {
   id: string;
@@ -49,6 +71,22 @@ const devices: Device[] = [
   },
 ];
 
+/**
+ * @swagger
+ * /seenDevices:
+ *   get:
+ *     summary: Get all seen devices
+ *     description: Retrieve a list of devices with status 'Seen'
+ *     responses:
+ *       200:
+ *         description: A list of seen devices
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Device'
+ */
 app.get("/seenDevices", (req: Request, res: Response) => {
   const seenDevices = devices.filter((device) => device.status === "Seen");
 
@@ -59,6 +97,22 @@ interface StatusCount {
   [key: string]: number;
 }
 
+/**
+ * @swagger
+ * /devicesStatus:
+ *   get:
+ *     summary: Get the status count of all devices
+ *     description: Retrieve a count of devices in each status category
+ *     responses:
+ *       200:
+ *         description: An object with the count of each device status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties:
+ *                 type: integer
+ */
 app.get("/devicesStatus", (req: Request, res: Response) => {
   const statusCounts: Record<string, number> = devices.reduce<StatusCount>(
     (acc: StatusCount, item) => {
@@ -72,6 +126,22 @@ app.get("/devicesStatus", (req: Request, res: Response) => {
   res.json(statusCounts);
 });
 
+/**
+ * @swagger
+ * /devices:
+ *   get:
+ *     summary: Get all devices
+ *     description: Retrieve a list of all devices
+ *     responses:
+ *       200:
+ *         description: A list of devices
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Device'
+ */
 app.get("/devices", (req: Request, res: Response) => {
   res.json(devices);
 });
