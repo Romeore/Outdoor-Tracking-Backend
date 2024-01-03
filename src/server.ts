@@ -36,6 +36,7 @@ interface Device {
     longitude: number;
   };
   status: "Seen" | "Missing" | "Repair";
+  timestamp: number;
 }
 
 const devices: Device[] = [
@@ -47,6 +48,7 @@ const devices: Device[] = [
       longitude: 4.9654,
     },
     status: "Seen",
+    timestamp:0.00,
   },
   {
     id: "2",
@@ -56,18 +58,63 @@ const devices: Device[] = [
       longitude: 4.9644,
     },
     status: "Seen",
+    timestamp:0.00,
   },
   {
     id: "3",
     name: "Device 3",
     location: { latitude: -1, longitude: -1 },
     status: "Missing",
+    timestamp:0.00,
+  },
+  {
+    id: "3",
+    name: "Device 3",
+    location: { latitude: 41, longitude: 40 },
+    status: "Seen",
+    timestamp:1.00,
+  },
+  {
+    id: "3",
+    name: "Device 3",
+    location: { latitude: 42, longitude: 40 },
+    status: "Seen",
+    timestamp:2.00,
+  },
+  {
+    id: "3",
+    name: "Device 3",
+    location: { latitude: 43, longitude: 40 },
+    status: "Seen",
+    timestamp:3.00,
+  },
+  {
+    id: "3",
+    name: "Device 3",
+    location: { latitude: -1, longitude: -1 },
+    status: "Missing",
+    timestamp:3.12,
+  },
+  {
+    id: "3",
+    name: "Device 3",
+    location: { latitude: -1, longitude: -1 },
+    status: "Repair",
+    timestamp:3.3,
+  },
+  {
+    id: "3",
+    name: "Device 3",
+    location: { latitude: -1, longitude: -1 },
+    status: "Repair",
+    timestamp:4,
   },
   {
     id: "4",
     name: "Device 4",
     location: { latitude: -1, longitude: -1 },
     status: "Repair",
+    timestamp:0.00
   },
 ];
 
@@ -114,14 +161,31 @@ interface StatusCount {
  *                 type: integer
  */
 app.get("/devicesStatus", (req: Request, res: Response) => {
-  const statusCounts: Record<string, number> = devices.reduce<StatusCount>(
-    (acc: StatusCount, item) => {
-      const status = item.status.toLowerCase();
-      acc[status] = (acc[status] || 0) + 1; // Increment the count for the current status
-      return acc;
-    },
-    { total: devices.length } // Add the total to the beginning.
-  );
+  const latestStatusMap = new Map();
+
+  // Iterate over the devices to find the most recent status of each
+  devices.forEach(device => {
+    const existingEntry = latestStatusMap.get(device.id);
+    if (!existingEntry || device.timestamp > existingEntry.timestamp) {
+      latestStatusMap.set(device.id, device);
+    }
+  });
+
+  // Initialize status counts with zero for each status
+  const statusCounts: Record<string, number> = {
+    missing: 0,
+    repair: 0,
+    seen: 0,
+    total: latestStatusMap.size
+  };
+
+  // Update the status counts based on the most recent statuses
+  latestStatusMap.forEach(device => {
+    const status = device.status.toLowerCase();
+    if (statusCounts.hasOwnProperty(status)) {
+      statusCounts[status] += 1;
+    }
+  });
 
   res.json(statusCounts);
 });
