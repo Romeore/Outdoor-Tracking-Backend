@@ -1,0 +1,39 @@
+stages: 
+  - build
+  - test
+  - deploy
+
+backend_build:
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - docker info
+    - echo $CI_REGISTRY_USER
+    - echo $CI_REGISTRY
+    - echo $CI_PROJECT_NAME
+    - echo $CI_PROJECT_NAMESPACE
+    - echo $CI_PROJECT_PATH
+    - echo $CI_PROJECT_ROOT_NAMESPACE
+    - echo $CI_REGISTRY_IMAGE
+    - echo $CI_REGISTRY_PASSWORD |docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+backend_deploy: 
+  image: alpine:latest
+  stage: deploy
+  services:
+    - docker:dind
+  script:
+    - chmod og= $ID_ED25519
+    - apk update && apk add openssh-client
+    - ssh -i $ID_ED25519 -o StrictHostKeyChecking=no $BIP_VM1_USER@$BIP_VM1_IP "echo $CI_REGISTRY >> erfolg"
+    - ssh -i $ID_ED25519 -o StrictHostKeyChecking=no $BIP_VM1_USER@$BIP_VM1_IP "echo $CI_REGISTRY_PASSWORD |docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin"
+    - ssh -i $ID_ED25519 -o StrictHostKeyChecking=no $BIP_VM1_USER@$BIP_VM1_IP "docker pull $CI_REGISTRY_IMAGE:latest"
+    - ssh -i $ID_ED25519 -o StrictHostKeyChecking=no $BIP_VM1_USER@$BIP_VM1_IP "docker container rm -f findo-backend || true"
+    - ssh -i $ID_ED25519 -o StrictHostKeyChecking=no $BIP_VM1_USER@$BIP_VM1_IP "docker run -d -p 3001:3001 --name findo-backend $CI_REGISTRY_IMAGE:latest"
+
+  only:
+    - main
