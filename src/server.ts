@@ -71,8 +71,9 @@ const devices: Device[] = combinedDevices.filter(isValidDevice);
  *                 $ref: '#/components/schemas/Device'
  */
 app.get("/seenDevices", (req: Request, res: Response) => {
-  const seenDevices = devices.filter((device) => device.status === "Seen");
-
+  const seenDevices = devices.filter((device, index, self) =>
+  index === self.findIndex(d => d.id === device.id && device.status === 'Seen')
+);
   res.json(seenDevices);
 });
 
