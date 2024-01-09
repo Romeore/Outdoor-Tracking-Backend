@@ -4,6 +4,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
+import combinedDevices from './combinedDevices.json';
 
 const swaggerDefinition = {
   openapi: '3.0.0',
@@ -39,84 +40,19 @@ interface Device {
   timestamp: number;
 }
 
-const devices: Device[] = [
-  {
-    id: "1",
-    name: "Device 1",
-    location: {
-      latitude: 51.1614,
-      longitude: 4.9654,
-    },
-    status: "Seen",
-    timestamp:0.00,
-  },
-  {
-    id: "2",
-    name: "Device 2",
-    location: {
-      latitude: 51.1624,
-      longitude: 4.9644,
-    },
-    status: "Seen",
-    timestamp:0.00,
-  },
-  {
-    id: "3",
-    name: "Device 3",
-    location: { latitude: -1, longitude: -1 },
-    status: "Missing",
-    timestamp:0.00,
-  },
-  {
-    id: "3",
-    name: "Device 3",
-    location: { latitude: 41, longitude: 40 },
-    status: "Seen",
-    timestamp:1.00,
-  },
-  {
-    id: "3",
-    name: "Device 3",
-    location: { latitude: 42, longitude: 40 },
-    status: "Seen",
-    timestamp:2.00,
-  },
-  {
-    id: "3",
-    name: "Device 3",
-    location: { latitude: 43, longitude: 40 },
-    status: "Seen",
-    timestamp:3.00,
-  },
-  {
-    id: "3",
-    name: "Device 3",
-    location: { latitude: -1, longitude: -1 },
-    status: "Missing",
-    timestamp:3.12,
-  },
-  {
-    id: "3",
-    name: "Device 3",
-    location: { latitude: -1, longitude: -1 },
-    status: "Repair",
-    timestamp:3.3,
-  },
-  {
-    id: "3",
-    name: "Device 3",
-    location: { latitude: -1, longitude: -1 },
-    status: "Repair",
-    timestamp:4,
-  },
-  {
-    id: "4",
-    name: "Device 4",
-    location: { latitude: -1, longitude: -1 },
-    status: "Repair",
-    timestamp:0.00
-  },
-];
+function isValidDevice(device: any): device is Device {
+  const validStatuses = ["Seen", "Missing", "Repair"];
+
+  return typeof device.id === 'string' &&
+         typeof device.name === 'string' &&
+         typeof device.location === 'object' &&
+         typeof device.location.latitude === 'number' &&
+         typeof device.location.longitude === 'number' &&
+         validStatuses.includes(device.status) &&
+         typeof device.timestamp === 'number';
+}
+
+const devices: Device[] = combinedDevices.filter(isValidDevice);
 
 /**
  * @swagger
@@ -135,8 +71,9 @@ const devices: Device[] = [
  *                 $ref: '#/components/schemas/Device'
  */
 app.get("/seenDevices", (req: Request, res: Response) => {
-  const seenDevices = devices.filter((device) => device.status === "Seen");
-
+  const seenDevices = devices.filter((device, index, self) =>
+  index === self.findIndex(d => d.id === device.id && device.status === 'Seen')
+);
   res.json(seenDevices);
 });
 
