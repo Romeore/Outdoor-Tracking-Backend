@@ -1,4 +1,4 @@
-# Website Repo | BIP Challenge 1 - Asset Material Tracking Outdoors
+# Backend | BIP Challenge 1 - Asset Material Tracking Outdoors
 
 ## Introduction
 Our project revolves around the outdoor tracking of tools and materials at Janssen Pharmaceutica.
